@@ -1,0 +1,144 @@
+# module.mihailenko-a1-task1-dev.data.yandex_compute_image.ubuntu:
+data "yandex_compute_image" "ubuntu" {
+    created_at          = "2026-05-11T11:28:12Z"
+    description         = "Ubuntu 20.04 lts v20260508124703"
+    family              = "ubuntu-2004-lts"
+    folder_id           = "standard-images"
+    hardware_generation = [
+        {
+            generation2_features = []
+            legacy_features      = [
+                {
+                    pci_topology = "PCI_TOPOLOGY_V2"
+                },
+            ]
+        },
+    ]
+    id                  = "fd8dr8ka79lp0g50fk0s"
+    image_id            = "fd8dr8ka79lp0g50fk0s"
+    labels              = {
+        "version"                  = "20260508124703"
+        "x-hopper-operation-id"    = "d9p3g3t03p71a5sk23av"
+        "x-hopper-source-image-id" = "fd8ou2f3n7ee68rf9u24"
+    }
+    min_disk_size       = 5
+    name                = "ubuntu-20-04-lts-v20260511"
+    os_type             = "linux"
+    pooled              = true
+    product_ids         = [
+        "f2e59ec64684jg8oto22",
+    ]
+    size                = 2
+    status              = "ready"
+}
+
+# module.mihailenko-a1-task1-dev.random_id.suffix:
+resource "random_id" "suffix" {
+    b64_std     = "fbDu9Q=="
+    b64_url     = "fbDu9Q"
+    byte_length = 4
+    dec         = "2108747509"
+    hex         = "7db0eef5"
+    id          = "fbDu9Q"
+}
+
+# module.mihailenko-a1-task1-dev.yandex_compute_disk.vm_disk:
+resource "yandex_compute_disk" "vm_disk" {
+    block_size  = 4096
+    created_at  = "2026-05-11T21:35:04Z"
+    folder_id   = "b1g6vhebusaicm1la3fg"
+    id          = "fhm9mfqlod8966ucr68g"
+    image_id    = "fd8dr8ka79lp0g50fk0s"
+    name        = "dev-vm-disk-7db0eef5"
+    product_ids = [
+        "f2e59ec64684jg8oto22",
+    ]
+    size        = 20
+    status      = "ready"
+    type        = "network-ssd"
+    zone        = "ru-central1-a"
+
+    disk_placement_policy {}
+
+    hardware_generation {
+        legacy_features {
+            pci_topology = "PCI_TOPOLOGY_V2"
+        }
+    }
+}
+
+# module.mihailenko-a1-task1-dev.yandex_compute_instance.vm:
+resource "yandex_compute_instance" "vm" {
+    created_at                = "2026-05-11T21:35:14Z"
+    folder_id                 = "b1g6vhebusaicm1la3fg"
+    fqdn                      = "fhmveus2dgauulhl74rt.auto.internal"
+    hardware_generation       = [
+        {
+            generation2_features = []
+            legacy_features      = [
+                {
+                    pci_topology = "PCI_TOPOLOGY_V2"
+                },
+            ]
+        },
+    ]
+    id                        = "fhmveus2dgauulhl74rt"
+    metadata                  = {
+        "ssh-keys" = "ubuntu:ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCc6QMUaA78T4TVFZkXOH1HRXRc45Z6CXwmIHEB4Iv1nHeV+ZFOBvjoue0WgkkvlUOi2GhS1rpi/DWVTaHWMb5VMARBy/x5tgn7X9Ek86opk5w3L3kYHNbmTVTAV5wHYp1TPaLEnjK8HUxtUhLWeg/twzaQiZVKg5JFzbF7rAUNossRMJG13Vi39ja/gOoiLhlfAKE+XpbH9j9ATS+kAcdE4yVpM5lqdnvAzw85002ucE5rUm5zFW9IfL4iWkpMNNio4fVpilPYT1NOPq8gzbrnO3s8Imkh/emXsG+O0vuwyq0SdWPNcQ6tqwthwRxGHKeKw9DgkV8WXQl3Oxk5IHL5"
+    }
+    name                      = "dev-vm-9d27323e"
+    network_acceleration_type = "standard"
+    platform_id               = "standard-v1"
+    status                    = "running"
+    zone                      = "ru-central1-a"
+
+    boot_disk {
+        auto_delete = true
+        device_name = "fhm9mfqlod8966ucr68g"
+        disk_id     = "fhm9mfqlod8966ucr68g"
+        mode        = "READ_WRITE"
+
+        initialize_params {
+            block_size = 4096
+            image_id   = "fd8dr8ka79lp0g50fk0s"
+            name       = "dev-vm-disk-7db0eef5"
+            size       = 20
+            type       = "network-ssd"
+        }
+    }
+
+    metadata_options {
+        aws_v1_http_endpoint = 1
+        aws_v1_http_token    = 2
+        gce_http_endpoint    = 1
+        gce_http_token       = 1
+    }
+
+    network_interface {
+        index          = 0
+        ip_address     = "10.128.0.20"
+        ipv4           = true
+        ipv6           = false
+        mac_address    = "d0:0d:1f:77:b8:26"
+        nat            = true
+        nat_ip_address = "51.250.75.167"
+        nat_ip_version = "IPV4"
+        subnet_id      = "e9bnko718dlfitt039sq"
+    }
+
+    placement_policy {
+        host_affinity_rules       = []
+        placement_group_partition = 0
+    }
+
+    resources {
+        core_fraction = 100
+        cores         = 2
+        gpus          = 0
+        memory        = 4
+    }
+
+    scheduling_policy {
+        preemptible = true
+    }
+}
