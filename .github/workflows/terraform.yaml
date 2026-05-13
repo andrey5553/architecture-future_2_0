@@ -1,0 +1,192 @@
+name: Terraform CI/CD
+
+on:
+  pull_request:
+    branches: [main, master, dev, stage, prod]
+    paths:
+      - 'Task1Advanced/**'
+  push:
+    branches: [dev, stage]
+    paths:
+      - 'Task1Advanced/**'
+  workflow_dispatch:  # Ручной запуск
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - stage
+          - prod
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+env:
+  TF_ROOT: "Task1Advanced"
+  TF_VERSION: "1.8.0"
+
+jobs:
+  terraform:
+    name: Terraform - ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    # Блокируем параллельные запуски для одного окружения
+    concurrency: 
+      group: terraform-${{ github.ref_name }}
+      cancel-in-progress: false
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: 🔹 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🔹 Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+
+      - name: 🔹 Cache Terraform plugins
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/.terraform
+            **/.terraform.lock.hcl
+          key: ${{ runner.os }}-terraform-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-terraform-
+
+      - name: 🔹 Determine environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.environment }}" ]; then
+            ENV="${{ github.event.inputs.environment }}"
+          else
+            ENV="${{ github.ref_name }}"
+          fi
+          echo "environment=${ENV}" >> $GITHUB_OUTPUT
+          echo "Working with environment: ${ENV}"
+
+      # ──────────────────────────────────────────────────────────────
+      # Common validation for all environments
+      # ──────────────────────────────────────────────────────────────
+
+      - name: 🔹 Terraform Init
+        working-directory: ${{ env.TF_ROOT }}/envs/${{ steps.env.outputs.environment }}
+        run: terraform init
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_KEY }}
+
+      - name: 🔹 Terraform Validate
+        working-directory: ${{ env.TF_ROOT }}/envs/${{ steps.env.outputs.environment }}
+        run: terraform validate
+
+      - name: 🔹 Terraform Format Check
+        working-directory: ${{ env.TF_ROOT }}
+        run: terraform fmt -check -recursive
+
+      # ──────────────────────────────────────────────────────────────
+      # Plan (always run)
+      # ──────────────────────────────────────────────────────────────
+
+      - name: 🔹 Terraform Plan
+        id: plan
+        working-directory: ${{ env.TF_ROOT }}/envs/${{ steps.env.outputs.environment }}
+        run: |
+          terraform plan -no-color -out=tfplan \
+            -var="vm_name=${{ vars.VM_NAME_${{ steps.env.outputs.environment }} }}" \
+            -var="cores=${{ vars.CORES_${{ steps.env.outputs.environment }} }}" \
+            -var="memory=${{ vars.MEMORY_${{ steps.env.outputs.environment }} }}" \
+            -var="disk_size=${{ vars.DISK_SIZE_${{ steps.env.outputs.environment }} }}" \
+            -var="environment=${{ steps.env.outputs.environment }}" \
+            2>&1 | tee plan_output.txt
+          
+          # Сохраняем план для artifact
+          echo "plan_exit_code=$?" >> $GITHUB_OUTPUT
+        env:
+          TF_VAR_yandex_token: ${{ secrets.YC_TOKEN }}
+          TF_VAR_cloud_id: ${{ secrets.YC_CLOUD_ID }}
+          TF_VAR_folder_id: ${{ secrets.YC_FOLDER_ID }}
+          TF_VAR_subnet_id: ${{ secrets.YC_SUBNET_ID }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+          TF_VAR_labels: ${{ vars.LABELS_${{ steps.env.outputs.environment }} }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_KEY }}
+
+      - name: 🔹 Save Plan Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ steps.env.outputs.environment }}-${{ github.run_id }}
+          path: ${{ env.TF_ROOT }}/envs/${{ steps.env.outputs.environment }}/tfplan
+          retention-days: 7
+
+      - name: 🔹 Post plan summary
+        run: |
+          echo "## Terraform Plan Result" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```terraform' >> $GITHUB_STEP_SUMMARY
+          cat ${{ env.TF_ROOT }}/envs/${{ steps.env.outputs.environment }}/plan_output.txt | grep -E 'Plan:|No changes.' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      # ──────────────────────────────────────────────────────────────
+      # Destroy (manual only)
+      # ──────────────────────────────────────────────────────────────
+
+      - name: 🔹 Terraform Destroy
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy'
+        working-directory: ${{ env.TF_ROOT }}/envs/${{ steps.env.outputs.environment }}
+        run: terraform destroy -auto-approve -no-color
+        env:
+          TF_VAR_yandex_token: ${{ secrets.YC_TOKEN }}
+          TF_VAR_cloud_id: ${{ secrets.YC_CLOUD_ID }}
+          TF_VAR_folder_id: ${{ secrets.YC_FOLDER_ID }}
+          TF_VAR_vm_name: ${{ vars.VM_NAME_${{ steps.env.outputs.environment }} }}
+          TF_VAR_cores: ${{ vars.CORES_${{ steps.env.outputs.environment }} }}
+          TF_VAR_memory: ${{ vars.MEMORY_${{ steps.env.outputs.environment }} }}
+          TF_VAR_disk_size: ${{ vars.DISK_SIZE_${{ steps.env.outputs.environment }} }}
+          TF_VAR_subnet_id: ${{ secrets.YC_SUBNET_ID }}
+          TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY }}
+          TF_VAR_environment: ${{ steps.env.outputs.environment }}
+          TF_VAR_labels: ${{ vars.LABELS_${{ steps.env.outputs.environment }} }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_KEY }}
+
+      # ──────────────────────────────────────────────────────────────
+      # Apply (specific conditions)
+      # ──────────────────────────────────────────────────────────────
+
+      - name: 🔹 Terraform Apply
+        if: |
+          (github.event_name == 'push' && contains(fromJson('["dev","stage"]'), github.ref_name)) ||
+          (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply')
+        working-directory: ${{ env.TF_ROOT }}/envs/${{ steps.env.outputs.environment }}
+        run: terraform apply -no-color tfplan
+        env:
+          TF_VAR_yandex_token: ${{ secrets.YC_TOKEN }}
+          TF_VAR_cloud_id: ${{ secrets.YC_CLOUD_ID }}
+          TF_VAR_folder_id: ${{ secrets.YC_FOLDER_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.YC_ACCESS_KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.YC_SECRET_KEY }}
+
+      - name: 🔹 Output instance info
+        if: success() && (github.event_name == 'push' || github.event.inputs.action == 'apply')
+        working-directory: ${{ env.TF_ROOT }}/envs/${{ steps.env.outputs.environment }}
+        run: |
+          echo "## 🚀 Deployment Info" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          terraform output >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          

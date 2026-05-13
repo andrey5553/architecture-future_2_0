@@ -1,0 +1,21 @@
+your-repo/
+├── .github/
+│   └── workflows/
+│       └── terraform.yaml
+├── Task1Advanced/
+│   ├── envs/
+│   │   ├── dev/
+│   │   │   ├── main.tf
+│   │   │   ├── variables.tf
+│   │   │   ├── outputs.tf
+│   │   │   └── backend.tf
+│   │   ├── stage/
+│   │   │   └── ... (аналогично)
+│   │   └── prod/
+│   │       └── ... (аналогично)
+│   └── modules/
+│       └── vm/
+│           ├── main.tf
+│           ├── variables.tf
+│           └── outputs.tf
+└── .gitignore
