@@ -6,9 +6,9 @@ on:
     paths:
       - 'Task1Advanced/**'
   push:
-    branches: [dev, stage]
-    paths:
-      - 'Task1Advanced/**'
+    branches: [feat/work]
+#    paths:
+#      - 'Task1Advanced/**'
   workflow_dispatch:
     inputs:
       environment:
