@@ -1,0 +1,29 @@
+@startuml
+title C2: Web Portal
+
+package "Web Portal" {
+  [React Frontend] --> [Backend API (Go/Python)]
+  [Backend API] --> [Main Database]
+  [Backend API] --> [Auth Service]
+  [Backend API] --> [Medical Devices]
+  [Backend API] --> [AI Inference API]
+  [Backend API] --> [Fintech API]
+}
+
+[Main Database] --> [Backup]
+[Auth Service] --> [JWT Tokens]
+
+note right of [Backend API]
+  REST/JSON
+  Роли: пациент, врач, админ
+end note
+
+note right of [Main Database]
+  PostgreSQL
+  Хранит:
+  - Пациенты
+  - Диагнозы
+  - Приёмы
+end note
+
+@enduml

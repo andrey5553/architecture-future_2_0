@@ -1,0 +1,27 @@
+@startuml
+title C2: Fintech System
+
+package "Fintech" {
+  [Billing Engine] --> [Invoice Generator]
+  [Invoice Generator] --> [Payment Gateway]
+  [Payment Gateway] --> [Bank API]
+  [Payment Gateway] --> [Email Service]
+  [Billing Engine] --> [Usage Tracker]
+}
+
+[Usage Tracker] --> [IaC System] : VM uptime
+[Email Service] --> [Patient] : Счёт, подтверждение
+
+note right of [Payment Gateway]
+  Интеграция с:
+  - Sber, Tinkoff
+  - Apple Pay, Google Pay
+end note
+
+note right of [Billing Engine]
+  Подписки, разовые платежи
+  Скидки, купоны
+end note
+
+@enduml
+

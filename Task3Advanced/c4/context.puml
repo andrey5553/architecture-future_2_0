@@ -1,0 +1,127 @@
+@startuml
+skinparam linetype ortho
+skinparam backgroundColor #F5F5F5
+
+' ====== Акторы ======
+actor Developer as developer
+actor Patient as patient
+actor "Medical Staff" as doctor
+actor "External AI Service" as ai_service
+
+' ====== Системы ======
+rectangle "Infrastructure as Code (IaC) System" as iac {
+  [Terraform] as terraform
+  [GitHub Repo] as repo
+  [CI/CD Pipeline] as pipeline
+}
+
+cloud "Yandex Cloud" as yandexcloud {
+  [Virtual Machine] as vm
+  [Object Storage] as s3
+  [VPC Network] as vpc
+}
+
+database "Main Database" as db
+
+rectangle "Web Portal" as portal {
+  [Frontend UI]
+  [Backend API]
+}
+
+rectangle "Fintech System" as fintech {
+  [Payment Gateway]
+  [Billing]
+}
+
+cloud "AI Platform" as ai {
+  [ML Model Server]
+  [Inference API]
+}
+
+rectangle "Medical Devices" as medical {
+  [MRI Scanner]
+  [ECG Monitor]
+  [IoT Gateway]
+}
+
+' ====== Связи ======
+developer --> repo : Push code / PR
+repo --> pipeline : Trigger CI/CD
+pipeline --> terraform : Run plan/apply
+terraform --> yandexcloud : Provision resources
+yandexcloud --> vm : VM created
+vm --> db : Connect
+vm --> portal : Hosts backend/frontend
+vm --> fintech : Process payments
+vm --> ai : Send data for analysis
+vm --> medical : Receive device data
+
+portal --> patient : Access medical data
+portal --> doctor : Dashboard, reports
+medical --> vm : Stream real-time data
+ai --> vm : Return AI diagnostics
+fintech --> portal : Confirm payments
+
+' ====== Заметки ======
+note right of iac
+  Система управления инфраструктурой
+  - Terraform + GitHub Actions
+  - Управляет ВМ, сетью, хранилищем
+  - Безопасное развёртывание
+end note
+
+note right of yandexcloud
+  Облако:
+  - ВМ: хостит приложение
+  - S3: хранит состояние
+  - VPC: изолированная сеть
+end note
+
+note right of portal
+  Web Portal:
+  - Доступ для пациентов и врачей
+  - Просмотр результатов
+  - Управление приёмами
+end note
+
+note right of fintech
+  Fintech System:
+  - Оплата услуг
+  - Счёта, подписки
+  - Интеграция с банками
+end note
+
+note right of ai
+  AI Platform:
+  - Анализ МРТ, КТ
+  - Прогнозирование заболеваний
+  - Поддержка диагностики
+end note
+
+note right of medical
+  Medical Devices:
+  - Сканирование, мониторинг
+  - Передача данных в облако
+  - Требует высокой доступности
+end note
+
+note left of developer
+  Developer:
+  - Пишет IaC
+  - Запускает пайплайн
+end note
+
+note left of doctor
+  Medical Staff:
+  - Диагностика
+  - Работа с данными
+end note
+
+note right of patient
+  Patient:
+  - Просмотр результатов
+  - Запись на приём
+end note
+
+@enduml
+

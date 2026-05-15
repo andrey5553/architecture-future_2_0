@@ -1,0 +1,28 @@
+@startuml
+skinparam linetype ortho
+
+package "GitHub Actions Pipeline" {
+  [Checkout] --> [Setup Terraform]
+  [Setup Terraform] --> [Cache .terraform]
+  [Cache .terraform] --> [Terraform Init]
+  [Terraform Init] --> [Terraform Validate]
+  [Terraform Validate] --> [Terraform Plan]
+  [Terraform Plan] --> [Check for Destructive Changes]
+  [Check for Destructive Changes] --> [Terraform Apply]
+  [Terraform Apply] --> [Terraform Show]
+}
+
+note right of [Terraform Init]
+  Использует:
+  - backend "s3"
+  - AWS_ACCESS_KEY
+end note
+
+note right of [Check for Destructive Changes]
+  Анализирует tfplan через:
+  - terraform show -json
+  - jq
+  Блокирует чистое удаление
+end note
+
+@enduml

@@ -1,0 +1,36 @@
+@startuml
+skinparam linetype ortho
+
+package "Terraform Module: VM" {
+  [main.tf] as main
+  [variables.tf] as vars
+  [outputs.tf] as outputs
+}
+
+package "Resources" {
+  [yandex_compute_instance] as instance
+  [yandex_compute_disk] as disk
+  [yandex_vpc_security_group] as sg
+}
+
+main --> instance
+main --> disk
+main --> sg
+vars --> main : input
+main --> outputs : output
+
+note right of instance
+  VM:
+  - name, zone
+  - cores, memory
+  - boot_disk + ssh
+end note
+
+note right of disk
+  Данный диск:
+  - Может быть отдельным
+  - Удаляется при destroy
+end note
+
+@enduml
+

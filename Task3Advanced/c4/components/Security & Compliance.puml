@@ -1,0 +1,29 @@
+@startuml
+title C2: Security & Compliance
+
+package "Security" {
+  [Secrets Management] --> [GitHub Secrets]
+  [Network Security] --> [Yandex VPC]
+  [Audit Logs] --> [Log Storage]
+  [Threat Detection] --> [SIEM]
+  [Compliance Checker] --> [HIPAA/GDPR]
+}
+
+[GitHub Actions] --> [Secrets Management]
+[Yandex VPC] --> [Firewall Rules]
+[VM] --> [Audit Logs]
+[SIEM] --> [Alert Team]
+
+note right of [Secrets Management]
+  Никогда не в коде
+  Используются в CI/CD
+end note
+
+note right of [Compliance Checker]
+  Проверяет:
+  - Шифрование
+  - Аудит
+  - Доступ
+end note
+
+@enduml

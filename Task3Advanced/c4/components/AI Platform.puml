@@ -1,0 +1,27 @@
+@startuml
+title C2: AI Platform
+
+package "AI Platform" {
+  [Model Registry] --> [ML Model Server]
+  [ML Model Server] --> [Inference API]
+  [Inference API] --> [Preprocessing]
+  [Preprocessing] --> [Postprocessing]
+  [Postprocessing] --> [Results DB]
+}
+
+[Web Portal] --> [Inference API] : Отправка данных
+[Inference API] --> [Web Portal] : Результат (JSON)
+
+note right of [ML Model Server]
+  Модели:
+  - Анализ МРТ
+  - Прогноз аритмии
+  - Ранняя диагностика
+end note
+
+note right of [Preprocessing]
+  Нормализация, ресайз
+  Обрезка артефактов
+end note
+
+@enduml

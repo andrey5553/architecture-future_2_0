@@ -1,0 +1,28 @@
+@startuml
+title C2: Data Flow & Integration
+
+[Medical Devices] --> [Kafka] : Raw data
+[Kafka] --> [IaC VM] : Stream
+[IaC VM] --> [Preprocessing] : Clean, validate
+[Preprocessing] --> [Main Database]
+[Preprocessing] --> [AI Platform]
+[AI Platform] --> [Main Database] : Diagnosis
+[Main Database] --> [Web Portal]
+[Web Portal] --> [Patient]
+[Web Portal] --> [Doctor]
+
+note right of [Kafka]
+  Apache Kafka
+  Высокая надёжность
+  Репликация
+end note
+
+note right of [Preprocessing]
+  Проверка:
+  - Формат
+  - Шифрование
+  - Подпись
+end note
+
+@enduml
+

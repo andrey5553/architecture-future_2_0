@@ -1,0 +1,27 @@
+@startuml
+title C2: Medical Devices
+
+package "Medical Devices" {
+  [MRI Scanner] --> [DICOM Gateway]
+  [ECG Monitor] --> [Bluetooth Adapter]
+  [Ultrasound] --> [DICOM Gateway]
+  [IoT Hub] <-- [All Devices]
+}
+
+[IoT Hub] --> [Message Queue (Kafka)]
+[Message Queue] --> [IaC VM] : Stream data
+[IoT Hub] --> [Alert System]
+
+note right of [DICOM Gateway]
+  Стандарт: DICOM
+  Шифрование: TLS
+end note
+
+note right of [IoT Hub]
+  Принимает:
+  - Реальное время
+  - Мониторинг состояния
+end note
+
+@enduml
+
