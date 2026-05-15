@@ -1,0 +1,128 @@
+@startuml
+skinparam backgroundColor #F9F9F9
+skinparam sequence {
+    ArrowColor #000000
+    LifeLineBorderColor #000000
+    LifeLineBackgroundColor #FFFFFF
+}
+
+' ====== Участники (Stakeholders) ======
+actor "Пациент" as patient
+actor "Врач" as doctor
+actor "DevOps" as devops
+actor "Администратор" as admin
+
+' ====== Системы / Микросервисы ======
+rectangle "IoT Gateway" as iot
+rectangle "AI Service" as ai
+rectangle "Billing Service" as billing
+rectangle "Notification Service" as notify
+rectangle "Terraform CI/CD" as iac
+rectangle "Patient Registry" as registry
+rectangle "Credit Service" as credit
+
+' ====== Доменные события (Domain Events) — Оранжевые ======
+[Зарегистрирован новый пациент] as patient_registered #orange
+[Данные МРТ получены] as mri_received #orange
+[Анализ МРТ запущен] as ai_started #orange
+[Пройдено исследование ИИ] as ai_completed #orange
+[Диагноз сформирован] as diagnosis_created #orange
+[Создан кредитный договор] as credit_contract_created #orange
+[Счёт выставлен] as invoice_issued #orange
+[Оплата получена] as payment_received #orange
+[Уведомление отправлено] as notification_sent #orange
+[Инфраструктура обновлена] as infra_updated #orange
+
+' ====== Команды (Commands) — Синие ======
+[Зарегистрировать пациента] as register_patient #blue
+[Загрузить данные МРТ] as upload_mri #blue
+[Запустить ИИ-анализ] as trigger_ai #blue
+[Создать кредитный договор] as create_credit_contract #blue
+[Создать счёт] as create_invoice #blue
+[Отправить уведомление] as send_notification #blue
+
+' ====== Агрегаты (Aggregates) — Жёлтые ======
+[Пациент] as patient_aggregate #yellow
+[Медицинская запись] as medical_record #yellow
+[Модель ИИ] as ai_model #yellow
+[Счёт] as invoice #yellow
+[Кредитный договор] as credit_contract #yellow
+[Инфраструктура] as infrastructure #yellow
+
+' ====== Потоки событий ======
+
+' --- 1. Регистрация пациента ---
+admin --> register_patient
+register_patient --> patient_registered
+patient_registered --> patient_aggregate : Создать профиль
+patient_aggregate --> registry : Сохранить
+registry --> notify : Отправить приветствие
+notify --> notification_sent
+notification_sent --> patient : Добро пожаловать
+
+' --- 2. Исследование ---
+patient --> iot : Прошёл сканирование
+iot --> upload_mri
+upload_mri --> mri_received
+mri_received --> trigger_ai
+trigger_ai --> ai
+ai --> ai_model : Анализ
+ai_model --> ai_started
+ai_started --> ai_completed
+ai_completed --> diagnosis_created
+diagnosis_created --> medical_record : Сохранить
+medical_record --> doctor : Доступно
+
+' --- 3. Финансы ---
+doctor --> create_invoice
+create_invoice --> billing
+billing --> invoice : Создать
+invoice --> invoice_issued
+invoice_issued --> send_notification
+
+' --- 3.1 Кредитный договор ---
+admin --> create_credit_contract
+create_credit_contract --> credit_contract_created
+credit_contract_created --> credit_contract : Оформить
+credit_contract --> billing : Привязать к оплате
+credit_contract --> notify : Уведомить пациента
+
+' --- 4. Оплата ---
+patient --> payment_received
+payment_received --> billing
+billing --> invoice : Отметить как оплаченный
+billing --> infra_updated
+infra_updated --> iac : Масштабирование
+iac --> infrastructure : Terraform Apply
+
+' ====== Заметки ======
+note right of patient_registered
+  Источник: администратор или self-service
+  Данные: ФИО, контакт, страховой полис
+end note
+
+note right of ai_completed
+  Событие: ИИ завершил анализ
+  Результат: прикреплён к медицинской записи
+end note
+
+note right of credit_contract_created
+  Условия:
+  - Сумма: до 100 000 ₽
+  - Срок: 12 месяцев
+  - Процент: 0% (партнёрская программа)
+end note
+
+note right of invoice_issued
+  Сумма: 3 500 ₽
+  Срок оплаты: 7 дней
+  Способы: карта, кредит, SberPay
+end note
+
+note right of infra_updated
+  Причина: рост числа МРТ
+  Действие: +1 ВМ в пуле
+  CI/CD: автоматически
+end note
+
+@enduml

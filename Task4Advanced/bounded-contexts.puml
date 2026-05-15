@@ -1,0 +1,115 @@
+@startuml
+title C1: Context Diagram — Medical AI Platform
+
+skinparam linetype ortho
+skinparam backgroundColor #F9F9F9
+skinparam shadowing false
+
+' ========= АКТОРЫ =========
+actor "Developer" as developer
+actor "Medical Staff" as doctor
+actor "Patient" as patient
+actor "DevOps Engineer" as devops
+actor "External AI Service" as external_ai
+actor "Bank / Payment Provider" as bank
+
+' ========= СИСТЕМЫ =========
+rectangle "Web Portal" as portal {
+  [Frontend UI]
+  [Backend API]
+}
+
+cloud "Yandex Cloud" as yandexcloud {
+  [Virtual Machine] as vm
+  [Object Storage] as s3
+}
+
+database "Database" as db
+
+rectangle "IaC & CI/CD" as iac {
+  [Terraform]
+  [GitHub Actions]
+  [GitHub Repository]
+}
+
+rectangle "Medical Devices" as medical {
+  [MRI Scanner]
+  [ECG Monitor]
+  [IoT Gateway]
+}
+
+rectangle "Fintech System" as fintech {
+  [Payment Gateway]
+  [Billing Engine]
+}
+
+cloud "AI Platform" as ai {
+  [ML Model Server]
+  [Inference API]
+}
+
+' ========= ПОТОКИ ДАННЫХ =========
+developer --> iac : Push code
+iac --> vm : Deploy via Terraform
+vm --> db : Store/retrieve data
+db --> portal : Serve patient records
+portal --> patient : Display results
+portal --> doctor : Diagnostic dashboard
+medical --> vm : Send real-time data
+vm --> ai : Request AI analysis
+ai --> vm : Return diagnosis
+vm --> portal : Update with AI results
+portal --> fintech : Initiate payment
+fintech --> bank : Process transaction
+bank --> fintech : Confirm
+fintech --> portal : Payment success
+portal --> patient : Receipt
+ai --> external_ai : Optional 3rd-party model
+devops --> iac : Review & approve
+
+' ========= ЗАМЕТКИ =========
+note right of iac
+  Infrastructure as Code:
+  - Terraform manages VM
+  - GitHub Actions runs CI/CD
+  - State stored in S3
+end note
+
+note right of vm
+  Hosts:
+  - Web backend
+  - Data processing
+  - Secure API
+end note
+
+note right of medical
+  Devices stream data via:
+  - DICOM
+  - MQTT
+  - Bluetooth
+end note
+
+note right of ai
+  AI analyzes:
+  - MRI scans
+  - ECG patterns
+  - Risk prediction
+end note
+
+note right of fintech
+  Payment system:
+  - PCI-DSS compliant
+  - Tokenization
+  - No card storage
+end note
+
+note right of db
+  Stores:
+  - Patient records
+  - Diagnoses
+  - Appointments
+  - Billing data
+  Encrypted at rest
+end note
+
+@enduml

@@ -22,5 +22,18 @@
 
   [Карта рисков трансформации и план управления рисками](/Task3Advanced/README.md)
 
+## Задание 4. Моделирование домена и интеграций
   
+  [Схема bounded contexts](/Task4Advanced/bounded-contexts.puml)
+  [Схема bounded contexts PNG](/Task4Advanced/images/bounded-contexts.png)
+  
+  [Event Storming (событийная схема)](/Task4Advanced/event-storming.puml)
+  [Event Storming (событийная схема) PNG](/Task4Advanced/images/event-storming.png)
+  
+  [Описание агрегатов (границы, инварианты, ключи)](/Task4Advanced/aggregates.md)
+  
+  [Каталог доменных событий (название, контекст-источник, семантика, минимальный контракт)](/Task4Advanced/events.md)
+  
+  [Обоснование событийного подхода vs Camel/DWH](/Task4Advanced/justification.md)
+
 
