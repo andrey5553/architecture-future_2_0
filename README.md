@@ -36,4 +36,15 @@
   
   [Обоснование событийного подхода vs Camel/DWH](/Task4Advanced/justification.md)
 
+  ## Задание 5. Проектирование технологического стека и расчёт стоимости
+
+   [Расширенный техрадар](/Task5Advanced/tech-radar.md)
+   
+   [Техрадар визуализация технологического стека компании "Будущее 2.0"](/Task5Advanced/radar.py)
+   [Техрадар визуализация технологического стека компании "Будущее 2.0" PNG](/Task5Advanced/tech-radar.png)
+   
+   [TCO-анализ](/Task5Advanced/tco-analysis.md)
+   
+   [Роадмап](/Task5Advanced/roadmap.md)
+
 
