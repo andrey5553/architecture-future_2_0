@@ -1,0 +1,111 @@
+@startuml
+title C2: Integration Layer (бывший ESB)
+
+' ========== СЛОЙ 1: ВХОДНОЙ КОНТРОЛЬ (Edge Layer) ==========
+package "Слой 1: Входной контроль (Edge Layer)" {
+  
+  rectangle "API Gateway" as gateway {
+    [Route Resolver]
+    [Request Validator]
+    [Auth Enforcer]
+  }
+  note bottom of gateway
+    **Чем занимается:**
+    - Принимает все входящие запросы
+    - Проверяет аутентификацию
+    - Валидирует формат и поля
+    - Отклоняет мусор на входе
+    - Направляет запросы по маршрутам
+  end note
+}
+
+' ========== СЛОЙ 2: МАРШРУТИЗАЦИЯ (Routing Layer) ==========
+package "Слой 2: Маршрутизация событий (Routing Layer)" {
+  
+  rectangle "Event Router" as router {
+    [Topic Mapper]
+    [Partition Strategy]
+  }
+  note bottom of router
+    **Чем занимается:**
+    - Определяет, в какой топик Kafka отправить
+    - Распределяет нагрузку через partition key
+    - Не меняет данные, только маршрут
+  end note
+}
+
+' ========== СЛОЙ 3: ТРАНСФОРМАЦИЯ (Transformation Layer) ==========
+package "Слой 3: Трансформация форматов (Transformation Layer)" {
+  
+  rectangle "Transformer" as transformer {
+    [Format Converter]
+    [Enricher]
+    [Filter]
+  }
+  note bottom of transformer
+    **Чем занимается:**
+    - Конвертирует DICOM/HL7/XML → канонический JSON
+    - Добавляет метаданные (timestamp, version)
+    - Удаляет чувствительные данные (PII)
+    - Фильтрует дубликаты
+  end note
+}
+
+' ========== СЛОЙ 4: ОРКЕСТРАЦИЯ (Orchestration Layer) ==========
+package "Слой 4: Оркестрация бизнес-процессов (Orchestration Layer)" {
+  
+  rectangle "Workflow Orchestrator" as orchestrator {
+    [Saga Coordinator]
+    [Compensation Handler]
+    [Step Executor]
+  }
+  note bottom of orchestrator
+    **Чем занимается:**
+    - Координирует цепочки сервисов
+    - Управляет транзакциями (Saga pattern)
+    - При ошибке вызывает компенсацию
+    - Отслеживает статус каждого шага
+  end note
+}
+
+' ========== СЛОЙ 5: БИЗНЕС-ЛОГИКА (Business Logic Layer) ==========
+package "Слой 5: Доменная логика (Business Logic Layer)" {
+  
+  rectangle "Business Logic" as business {
+    [Domain Services]
+    [Validation Rules]
+  }
+  note bottom of business
+    **Чем занимается:**
+    - Правила диагностики
+    - Медицинские алгоритмы
+    - Расчёты и тарификация
+    - Применяет бизнес-правила
+  end note
+}
+
+' ========== СВЯЗИ МЕЖДУ СЛОЯМИ ==========
+[Medical Devices] --> gateway : Raw data (HTTP/MQTT)
+
+gateway -down-> router : Validated request
+router -down-> transformer : Routed event
+transformer -down-> [Kafka] : Canonical event
+
+[Kafka] -down-> orchestrator : Event stream
+orchestrator -down-> business : Orchestrated call
+
+business --> [Web Portal] : Result
+business --> [Fintech] : Billing event
+
+' ========== ЛЕГЕНДА ==========
+legend right
+    <b>5 слоёв интеграции вместо одного ESB:</b>
+    
+    1️⃣ Входной контроль — фильтрация на границе
+    2️⃣ Маршрутизация — куда отправить
+    3️⃣ Трансформация — как преобразовать
+    4️⃣ Оркестрация — координация сервисов
+    5️⃣ Бизнес-логика — что именно сделать
+end legend
+
+@enduml
